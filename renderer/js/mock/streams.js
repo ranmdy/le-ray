@@ -38,16 +38,40 @@ function releaseName(template, item) {
   const scene = String(item.title || '')
     .replace(/[^A-Za-z0-9]+/g, '.')
     .replace(/^\.|\.$/g, '');
-  return template.replace('{T}', scene).replace('{Y}', item.year ?? '');
+
+  let year = item.year;
+  if (year === undefined || year === null) {
+    year = '';
+  }
+
+  return template.replace('{T}', scene).replace('{Y}', year);
 }
 
 export function streamsFor(item) {
-  if (!item) return [];
+  if (!item) {
+    return [];
+  }
 
-  const list = TEMPLATES.filter((t) => item.quality === '4K' || t.quality !== '4K').map((t) => ({
-    ...t,
-    name: releaseName(t.name, item),
-  }));
+  const list = [];
 
-  return list.map((s, i) => ({ ...s, isBest: i === 0 }));
+  for (const template of TEMPLATES) {
+    if (template.quality === '4K' && item.quality !== '4K') {
+      continue;
+    }
+
+    list.push({
+      ...template,
+      name: releaseName(template.name, item),
+      isBest: list.length === 0,
+    });
+  }
+
+  return list;
 }
+
+//review: this is what we did here: streams.js makes up a few fake download options so the
+//source picker has something to show when you have no real sources connected yet. The names
+//are templates with {T} and {Y} standing in for the title and year, so the fake results at
+//least match the film you clicked instead of always naming the same one. A film we only
+//have in 1080p does not get offered a 4K option. None of this is used once you connect a
+//real source, it exists so the picker can be looked at with nothing set up.

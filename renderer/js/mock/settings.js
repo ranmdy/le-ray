@@ -55,3 +55,9 @@ export const SETTINGS_OPTIONS = {
     },
   ],
 };
+
+//review: this is what we did here: settings.js lists the options shown on the Playback,
+//Appearance and Storage pages. Despite living in the mock folder this is not fake data, it
+//is the real definition the settings screen reads. Each entry holds the label you see, the
+//help line under it, the list of values the button cycles through, and which one to start
+//on. Adding a new option here makes it appear on that page with no other change needed.

@@ -228,5 +228,18 @@ export const CATALOG = [
 ];
 
 export function findTitle(id) {
-  return CATALOG.find((c) => String(c.id) === String(id)) || null;
+  for (const item of CATALOG) {
+    if (String(item.id) === String(id)) {
+      return item;
+    }
+  }
+  return null;
 }
+
+//review: this is what we did here: catalog.js is a small hand written list of films used as
+//a stand in when there is no real film data available, for example before you add a TMDB
+//key. Each entry has the same fields a real TMDB film has, so the screens cannot tell the
+//difference and nothing special is needed to display them. findTitle looks one up by id and
+//returns nothing when there is no match. Returning nothing matters: an earlier version
+//returned the first film in the list instead, which meant any unknown id quietly showed the
+//wrong film rather than an empty state.

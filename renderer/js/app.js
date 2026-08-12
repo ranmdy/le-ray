@@ -16,6 +16,15 @@ import {
 
 const root = document.getElementById('app');
 
+const SOURCE_KIND_LABEL = {
+  addon: 'Stremio addon',
+  prowlarr: 'Prowlarr',
+  jackett: 'Jackett',
+};
+
+const CHROME_HIDE_DELAY = 2600;
+const SEARCH_DELAY = 300;
+
 export const state = {
   screen: 'home',
   loading: true,
@@ -43,13 +52,29 @@ export const state = {
   player: null,
 };
 
+const screens = { home, library: home, search, detail, player, settings };
+
 export function inLibrary(state, id) {
-  return state.library.some((item) => String(item.id) === String(id));
+  for (const item of state.library) {
+    if (String(item.id) === String(id)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function resolveTitle(id) {
-  if (state.detail && String(state.detail.id) === String(id)) return state.detail;
-  return state.catalog.find((item) => String(item.id) === String(id)) || null;
+  if (state.detail && String(state.detail.id) === String(id)) {
+    return state.detail;
+  }
+
+  for (const item of state.catalog) {
+    if (String(item.id) === String(id)) {
+      return item;
+    }
+  }
+
+  return null;
 }
 
 function saveLibrary() {
@@ -59,8 +84,6 @@ function saveLibrary() {
 function saveSources() {
   api.saveSettings({ sources: state.sources });
 }
-
-const SOURCE_KIND_LABEL = { addon: 'Stremio addon', prowlarr: 'Prowlarr', jackett: 'Jackett' };
 
 function hostOf(url) {
   try {
@@ -73,20 +96,33 @@ function hostOf(url) {
 function loadDetail(id, type) {
   state.detailLoading = true;
   state.detail = null;
+
   api.getDetail(id, type).then((item) => {
-    if (state.detailId !== id) return;
+    if (state.detailId !== id) {
+      return;
+    }
+
     state.detailLoading = false;
-    if (item) state.detail = item;
+    if (item) {
+      state.detail = item;
+    }
     render();
-    if (item?.type === 'tv') loadEpisodes(id, state.season);
+
+    if (item && item.type === 'tv') {
+      loadEpisodes(id, state.season);
+    }
   });
 }
 
 function loadEpisodes(id, season) {
   state.episodes = [];
   state.episodesLoading = true;
+
   api.getEpisodes(id, season).then((episodes) => {
-    if (state.detailId !== id || state.season !== season) return;
+    if (state.detailId !== id || state.season !== season) {
+      return;
+    }
+
     state.episodes = episodes || [];
     state.episodesLoading = false;
     render();
@@ -94,11 +130,13 @@ function loadEpisodes(id, season) {
 }
 
 let searchTimer = null;
+
 function scheduleSearch(query) {
   clearTimeout(searchTimer);
-  const q = query.trim();
 
-  if (!q) {
+  const wanted = query.trim();
+
+  if (!wanted) {
     state.results = null;
     state.searching = false;
     render();
@@ -107,245 +145,44 @@ function scheduleSearch(query) {
 
   state.searching = true;
   render();
+
   searchTimer = setTimeout(() => {
-    api.searchCatalog(q).then((results) => {
-      if (state.query.trim() !== q) return;
+    api.searchCatalog(wanted).then((results) => {
+      if (state.query.trim() !== wanted) {
+        return;
+      }
+
       state.results = results || [];
       state.searching = false;
       render();
     });
-  }, 300);
+  }, SEARCH_DELAY);
 }
-
-const screens = { home, library: home, search, detail, player, settings };
-
-function stub(name) {
-  return `<div class="stub"><div class="kicker">Not built yet</div><h1 class="stub__title">${name}</h1></div>`;
-}
-
-const actions = {
-  noop: () => false,
-
-  go: ({ screen }) => { state.screen = screen; state.picker = null; },
-  'open-detail': ({ id, type }) => {
-    state.screen = 'detail';
-    state.detailId = id;
-    state.season = 1;
-    state.episodes = [];
-    loadDetail(id, type);
-  },
-  back: () => { state.screen = 'home'; },
-
-  'scroll-row': ({ row, dir }) => {
-    const el = root.querySelector(`.row__scroll[data-row="${row}"]`);
-    if (el) el.scrollBy({ left: Number(dir) * 600, behavior: 'smooth' });
-    return false;
-  },
-
-  'clear-search': () => { state.query = ''; scheduleSearch(''); },
-  'toggle-library': ({ id }) => {
-    const idx = state.library.findIndex((item) => String(item.id) === String(id));
-    if (idx >= 0) {
-      state.library.splice(idx, 1);
-    } else {
-      const item = resolveTitle(id);
-      if (!item) return;
-      state.library.unshift(item);
-    }
-    saveLibrary();
-  },
-  'select-season': ({ season }) => {
-    state.season = Number(season);
-    loadEpisodes(state.detailId, state.season);
-  },
-
-  play: ({ id }) => { actions['open-picker']({ id }); },
-  'open-picker': ({ id }) => {
-    const titleId = id || state.detailId;
-    if (id) state.detailId = id;
-    state.picker = { loading: true, titleId, items: [] };
-    api.getStreams(titleId, resolveTitle(titleId)).then((items) => {
-      if (state.picker?.titleId !== titleId) return;
-      state.picker.items = items;
-      state.picker.loading = false;
-      render();
-    });
-  },
-  'close-picker': () => { state.picker = null; },
-  'select-stream': ({ streamId }) => {
-    const items = state.picker?.items || [];
-    const stream = items.find((s) => s.id === streamId) || items[0];
-    if (!stream) return;
-    state.picker = null;
-    state.screen = 'player';
-    const item = resolveTitle(state.detailId);
-    state.player = {
-      item, stream, loading: true, error: null,
-      playing: false, currentTime: 0, duration: 0, buffered: 0, buffering: false,
-      chromeVisible: true, subtitles: false, infoHash: null, peers: null,
-    };
-
-    if (stream.infoHash) pollStreamStats(stream.infoHash);
-
-    api.startStream(stream).then((result) => {
-      if (state.screen !== 'player' || state.player?.stream !== stream) return;
-
-      state.player.loading = false;
-      if (!result?.url) {
-        state.player.error = result?.error || 'Could not start this stream.';
-        stopStatsPoll();
-        render();
-        return;
-      }
-
-      state.player.infoHash = result.infoHash || null;
-      showPlayerVideo(result.url, item?.backdrop);
-      if (!state.player.infoHash) stopStatsPoll();
-      render();
-    });
-  },
-
-  'toggle-play': () => { togglePlayerPlayback(); return false; },
-  'toggle-subtitles': () => { if (state.player) state.player.subtitles = !state.player.subtitles; },
-  'toggle-fullscreen': () => {
-    if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
-    else document.exitFullscreen().catch(() => {});
-    return false;
-  },
-  'seek-player': (dataset, event, el) => {
-    if (!state.player) return;
-    const rect = el.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
-    seekPlayerTo(pct * (state.player.duration || 0));
-    return false;
-  },
-  'close-player': () => {
-    const infoHash = state.player?.infoHash;
-    hidePlayerVideo();
-    stopStatsPoll();
-    if (infoHash) api.stopStream(infoHash);
-    state.screen = 'home';
-    state.player = null;
-  },
-
-  'select-settings-section': ({ section }) => { state.settingsSection = section; },
-  'add-source': () => {
-    const url = (state.sourceInputUrl || '').trim();
-    const kind = state.sourceKind || 'addon';
-    const apiKey = (state.sourceInputApiKey || '').trim();
-
-    if (!url || (kind !== 'addon' && !apiKey)) return;
-
-    state.sources.push({
-      name: `${SOURCE_KIND_LABEL[kind]} — ${hostOf(url)}`,
-      url,
-      kind,
-      ...(kind !== 'addon' ? { apiKey } : {}),
-    });
-    state.sourceInputUrl = '';
-    state.sourceInputApiKey = '';
-    saveSources();
-  },
-  'remove-source': ({ index }) => {
-    const i = Number(index);
-    if (!isNaN(i) && i >= 0 && i < state.sources.length) {
-      state.sources.splice(i, 1);
-      saveSources();
-    }
-  },
-  'cycle-setting': ({ section, key }) => {
-    const list = SETTINGS_OPTIONS[section] || [];
-    const item = list.find((o) => o.key === key);
-    if (!item) return;
-    const current = state.settings[key] ?? item.default;
-    const nextIdx = (item.options.indexOf(current) + 1) % item.options.length;
-    state.settings[key] = item.options[nextIdx];
-  },
-};
-
-export function render() {
-  const activeId = document.activeElement ? document.activeElement.id : null;
-  const selStart = document.activeElement?.selectionStart;
-  const selEnd = document.activeElement?.selectionEnd;
-
-  const screen = screens[state.screen];
-  let html = screen ? screen(state) : stub(state.screen);
-  if (state.picker && state.screen !== 'player') html += picker(state);
-  root.innerHTML = html;
-
-  if (activeId) {
-    const el = document.getElementById(activeId);
-    if (el) {
-      el.focus();
-      if (typeof selStart === 'number' && typeof selEnd === 'number' && el.setSelectionRange) {
-        el.setSelectionRange(selStart, selEnd);
-      }
-    }
-  }
-}
-
-root.addEventListener('click', (event) => {
-  const el = event.target.closest('[data-action]');
-  if (!el) return;
-  const action = actions[el.dataset.action];
-  if (!action) return;
-  if (action(el.dataset, event, el) !== false) render();
-});
-
-root.addEventListener('input', (event) => {
-  const action = event.target.dataset?.action;
-  if (action === 'search-input') { state.query = event.target.value; scheduleSearch(state.query); }
-  else if (action === 'source-url-input') { state.sourceInputUrl = event.target.value; }
-  else if (action === 'source-apikey-input') { state.sourceInputApiKey = event.target.value; }
-  else if (action === 'set-source-kind') {
-    state.sourceKind = event.target.value;
-    state.sourceInputApiKey = '';
-    render();
-  }
-});
-
-window.addEventListener('keydown', (event) => {
-  if (state.screen === 'player') {
-    if (event.code === 'Space') { event.preventDefault(); togglePlayerPlayback(); }
-    else if (event.code === 'Escape') { event.preventDefault(); actions['close-player'](); render(); }
-  } else if (state.picker) {
-    if (event.code === 'Enter' && !state.picker.loading) {
-      event.preventDefault();
-      const items = state.picker.items || [];
-      const best = items.find((s) => s.isBest) || items[0];
-      if (best) { actions['select-stream']({ streamId: best.id }); render(); }
-    } else if (event.code === 'Escape') {
-      event.preventDefault(); actions['close-picker'](); render();
-    }
-  }
-});
-
-let mouseTimer = null;
-window.addEventListener('mousemove', () => {
-  if (state.screen !== 'player' || !state.player) return;
-  if (!state.player.chromeVisible) { state.player.chromeVisible = true; render(); }
-  clearTimeout(mouseTimer);
-  mouseTimer = setTimeout(() => {
-    if (state.screen === 'player' && state.player) {
-      state.player.chromeVisible = false;
-      render();
-    }
-  }, 2600);
-});
 
 let statsTimer = null;
 
 function pollStreamStats(infoHash) {
   clearInterval(statsTimer);
+
   statsTimer = setInterval(async () => {
-    if (state.screen !== 'player' || !state.player) return stopStatsPoll();
+    if (state.screen !== 'player' || !state.player) {
+      stopStatsPoll();
+      return;
+    }
 
     const stats = await api.getStreamStats(infoHash);
-    if (state.screen !== 'player' || !state.player) return;
-    if (!stats) return;
+
+    if (state.screen !== 'player' || !state.player) {
+      return;
+    }
+    if (!stats) {
+      return;
+    }
 
     state.player.peers = stats.numPeers;
-    if (!state.player.loading) state.player.speed = formatSpeed(stats.downloadSpeed);
+    if (!state.player.loading) {
+      state.player.speed = formatSpeed(stats.downloadSpeed);
+    }
     render();
   }, 1000);
 }
@@ -356,32 +193,518 @@ function stopStatsPoll() {
 }
 
 function formatSpeed(bytesPerSec = 0) {
-  if (bytesPerSec >= 1024 * 1024) return `${(bytesPerSec / (1024 * 1024)).toFixed(1)} MB/s`;
-  if (bytesPerSec >= 1024) return `${Math.round(bytesPerSec / 1024)} KB/s`;
-  return `${Math.round(bytesPerSec)} B/s`;
+  if (bytesPerSec >= 1024 * 1024) {
+    const mb = bytesPerSec / (1024 * 1024);
+    return mb.toFixed(1) + ' MB/s';
+  }
+
+  if (bytesPerSec >= 1024) {
+    return Math.round(bytesPerSec / 1024) + ' KB/s';
+  }
+
+  return Math.round(bytesPerSec) + ' B/s';
 }
+
+function stub(name) {
+  return `<div class="stub"><div class="kicker">Not built yet</div><h1 class="stub__title">${name}</h1></div>`;
+}
+
+const actions = {
+  noop: () => false,
+
+  go: ({ screen }) => {
+    state.screen = screen;
+    state.picker = null;
+  },
+
+  back: () => {
+    state.screen = 'home';
+  },
+
+  'open-detail': ({ id, type }) => {
+    state.screen = 'detail';
+    state.detailId = id;
+    state.season = 1;
+    state.episodes = [];
+    loadDetail(id, type);
+  },
+
+  'scroll-row': ({ row, dir }) => {
+    const el = root.querySelector(`.row__scroll[data-row="${row}"]`);
+    if (el) {
+      el.scrollBy({ left: Number(dir) * 600, behavior: 'smooth' });
+    }
+    return false;
+  },
+
+  'clear-search': () => {
+    state.query = '';
+    scheduleSearch('');
+  },
+
+  'toggle-library': ({ id }) => {
+    let foundAt = -1;
+
+    for (let i = 0; i < state.library.length; i++) {
+      if (String(state.library[i].id) === String(id)) {
+        foundAt = i;
+        break;
+      }
+    }
+
+    if (foundAt >= 0) {
+      state.library.splice(foundAt, 1);
+    } else {
+      const item = resolveTitle(id);
+      if (!item) {
+        return;
+      }
+      state.library.unshift(item);
+    }
+
+    saveLibrary();
+  },
+
+  'select-season': ({ season }) => {
+    state.season = Number(season);
+    loadEpisodes(state.detailId, state.season);
+  },
+
+  play: ({ id }) => {
+    actions['open-picker']({ id });
+  },
+
+  'open-picker': ({ id }) => {
+    const titleId = id || state.detailId;
+    if (id) {
+      state.detailId = id;
+    }
+
+    state.picker = { loading: true, titleId, items: [] };
+
+    api.getStreams(titleId, resolveTitle(titleId)).then((items) => {
+      if (!state.picker || state.picker.titleId !== titleId) {
+        return;
+      }
+
+      state.picker.items = items;
+      state.picker.loading = false;
+      render();
+    });
+  },
+
+  'close-picker': () => {
+    state.picker = null;
+  },
+
+  'select-stream': ({ streamId }) => {
+    let items = [];
+    if (state.picker) {
+      items = state.picker.items || [];
+    }
+
+    let stream = null;
+    for (const candidate of items) {
+      if (candidate.id === streamId) {
+        stream = candidate;
+        break;
+      }
+    }
+    if (!stream) {
+      stream = items[0];
+    }
+    if (!stream) {
+      return;
+    }
+
+    const item = resolveTitle(state.detailId);
+
+    state.picker = null;
+    state.screen = 'player';
+    state.player = {
+      item,
+      stream,
+      loading: true,
+      error: null,
+      playing: false,
+      currentTime: 0,
+      duration: 0,
+      buffered: 0,
+      buffering: false,
+      chromeVisible: true,
+      subtitles: false,
+      infoHash: null,
+      peers: null,
+    };
+
+    if (stream.infoHash) {
+      pollStreamStats(stream.infoHash);
+    }
+
+    api.startStream(stream).then((result) => {
+      if (state.screen !== 'player' || !state.player) {
+        return;
+      }
+      if (state.player.stream !== stream) {
+        return;
+      }
+
+      state.player.loading = false;
+
+      if (!result || !result.url) {
+        let message = 'Could not start this stream.';
+        if (result && result.error) {
+          message = result.error;
+        }
+
+        state.player.error = message;
+        stopStatsPoll();
+        render();
+        return;
+      }
+
+      state.player.infoHash = result.infoHash || null;
+
+      let poster = null;
+      if (item) {
+        poster = item.backdrop;
+      }
+      showPlayerVideo(result.url, poster);
+
+      if (!state.player.infoHash) {
+        stopStatsPoll();
+      }
+      render();
+    });
+  },
+
+  'toggle-play': () => {
+    togglePlayerPlayback();
+    return false;
+  },
+
+  'toggle-subtitles': () => {
+    if (state.player) {
+      state.player.subtitles = !state.player.subtitles;
+    }
+  },
+
+  'toggle-fullscreen': () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+    return false;
+  },
+
+  'seek-player': (dataset, event, el) => {
+    if (!state.player) {
+      return;
+    }
+
+    const rect = el.getBoundingClientRect();
+
+    let fraction = (event.clientX - rect.left) / rect.width;
+    if (fraction < 0) {
+      fraction = 0;
+    }
+    if (fraction > 1) {
+      fraction = 1;
+    }
+
+    seekPlayerTo(fraction * (state.player.duration || 0));
+    return false;
+  },
+
+  'close-player': () => {
+    let infoHash = null;
+    if (state.player) {
+      infoHash = state.player.infoHash;
+    }
+
+    hidePlayerVideo();
+    stopStatsPoll();
+
+    if (infoHash) {
+      api.stopStream(infoHash);
+    }
+
+    state.screen = 'home';
+    state.player = null;
+  },
+
+  'select-settings-section': ({ section }) => {
+    state.settingsSection = section;
+  },
+
+  'add-source': () => {
+    const url = (state.sourceInputUrl || '').trim();
+    const kind = state.sourceKind || 'addon';
+    const apiKey = (state.sourceInputApiKey || '').trim();
+
+    if (!url) {
+      return;
+    }
+    if (kind !== 'addon' && !apiKey) {
+      return;
+    }
+
+    const source = {
+      name: SOURCE_KIND_LABEL[kind] + ' — ' + hostOf(url),
+      url,
+      kind,
+    };
+
+    if (kind !== 'addon') {
+      source.apiKey = apiKey;
+    }
+
+    state.sources.push(source);
+    state.sourceInputUrl = '';
+    state.sourceInputApiKey = '';
+    saveSources();
+  },
+
+  'remove-source': ({ index }) => {
+    const i = Number(index);
+
+    if (isNaN(i) || i < 0 || i >= state.sources.length) {
+      return;
+    }
+
+    state.sources.splice(i, 1);
+    saveSources();
+  },
+
+  'cycle-setting': ({ section, key }) => {
+    const list = SETTINGS_OPTIONS[section] || [];
+
+    let option = null;
+    for (const candidate of list) {
+      if (candidate.key === key) {
+        option = candidate;
+        break;
+      }
+    }
+    if (!option) {
+      return;
+    }
+
+    let current = state.settings[key];
+    if (current === undefined || current === null) {
+      current = option.default;
+    }
+
+    const nextIndex = (option.options.indexOf(current) + 1) % option.options.length;
+    state.settings[key] = option.options[nextIndex];
+  },
+};
+
+export function render() {
+  const active = document.activeElement;
+
+  let activeId = null;
+  let selStart;
+  let selEnd;
+
+  if (active) {
+    activeId = active.id;
+    selStart = active.selectionStart;
+    selEnd = active.selectionEnd;
+  }
+
+  const screen = screens[state.screen];
+
+  let html;
+  if (screen) {
+    html = screen(state);
+  } else {
+    html = stub(state.screen);
+  }
+
+  if (state.picker && state.screen !== 'player') {
+    html += picker(state);
+  }
+
+  root.innerHTML = html;
+
+  if (!activeId) {
+    return;
+  }
+
+  const el = document.getElementById(activeId);
+  if (!el) {
+    return;
+  }
+
+  el.focus();
+
+  if (typeof selStart === 'number' && typeof selEnd === 'number' && el.setSelectionRange) {
+    el.setSelectionRange(selStart, selEnd);
+  }
+}
+
+root.addEventListener('click', (event) => {
+  const el = event.target.closest('[data-action]');
+  if (!el) {
+    return;
+  }
+
+  const action = actions[el.dataset.action];
+  if (!action) {
+    return;
+  }
+
+  const result = action(el.dataset, event, el);
+  if (result !== false) {
+    render();
+  }
+});
+
+root.addEventListener('input', (event) => {
+  const target = event.target;
+  if (!target.dataset) {
+    return;
+  }
+
+  const action = target.dataset.action;
+
+  if (action === 'search-input') {
+    state.query = target.value;
+    scheduleSearch(state.query);
+  } else if (action === 'source-url-input') {
+    state.sourceInputUrl = target.value;
+  } else if (action === 'source-apikey-input') {
+    state.sourceInputApiKey = target.value;
+  } else if (action === 'set-source-kind') {
+    state.sourceKind = target.value;
+    state.sourceInputApiKey = '';
+    render();
+  }
+});
+
+window.addEventListener('keydown', (event) => {
+  if (state.screen === 'player') {
+    if (event.code === 'Space') {
+      event.preventDefault();
+      togglePlayerPlayback();
+    } else if (event.code === 'Escape') {
+      event.preventDefault();
+      actions['close-player']();
+      render();
+    }
+    return;
+  }
+
+  if (!state.picker) {
+    return;
+  }
+
+  if (event.code === 'Enter' && !state.picker.loading) {
+    event.preventDefault();
+
+    const items = state.picker.items || [];
+
+    let best = null;
+    for (const item of items) {
+      if (item.isBest) {
+        best = item;
+        break;
+      }
+    }
+    if (!best) {
+      best = items[0];
+    }
+
+    if (best) {
+      actions['select-stream']({ streamId: best.id });
+      render();
+    }
+  } else if (event.code === 'Escape') {
+    event.preventDefault();
+    actions['close-picker']();
+    render();
+  }
+});
+
+let mouseTimer = null;
+
+window.addEventListener('mousemove', () => {
+  if (state.screen !== 'player' || !state.player) {
+    return;
+  }
+
+  if (!state.player.chromeVisible) {
+    state.player.chromeVisible = true;
+    render();
+  }
+
+  clearTimeout(mouseTimer);
+  mouseTimer = setTimeout(() => {
+    if (state.screen === 'player' && state.player) {
+      state.player.chromeVisible = false;
+      render();
+    }
+  }, CHROME_HIDE_DELAY);
+});
 
 mountPlayerVideo();
 render();
 
 api.getSettings().then((stored) => {
-  state.library = Array.isArray(stored?.library) ? stored.library : [];
-  state.sources = Array.isArray(stored?.sources) ? stored.sources : [];
-  if (stored?.settings) state.settings = stored.settings;
+  if (!stored) {
+    return;
+  }
+
+  if (Array.isArray(stored.library)) {
+    state.library = stored.library;
+  }
+  if (Array.isArray(stored.sources)) {
+    state.sources = stored.sources;
+  }
+  if (stored.settings) {
+    state.settings = stored.settings;
+  }
+
   render();
 });
 
-api.getCatalogs().then(({ rows, catalogs }) => {
-  state.catalogRows = rows || [];
-  state.catalogs = catalogs || {};
+api.getCatalogs().then((result) => {
+  state.catalogRows = result.rows || [];
+  state.catalogs = result.catalogs || {};
 
   const seen = new Set();
-  state.catalog = Object.values(state.catalogs)
-    .flat()
-    .filter((item) => !seen.has(String(item.id)) && seen.add(String(item.id)));
+  const everything = [];
 
+  for (const key of Object.keys(state.catalogs)) {
+    for (const item of state.catalogs[key]) {
+      const id = String(item.id);
+      if (seen.has(id)) {
+        continue;
+      }
+
+      seen.add(id);
+      everything.push(item);
+    }
+  }
+
+  state.catalog = everything;
   state.loading = false;
   render();
 });
 
 window.__leray = { state, render };
+
+//review: this is what we did here: app.js runs the whole window. It works on one simple
+//idea. There is a single state object holding everything the app currently knows, and one
+//render function that turns that state into html and drops it into the page. Nothing else
+//touches the page directly.
+//Clicks are handled in one place too. Every button in the app carries a data-action label,
+//and the one click listener here looks that name up in the actions list and runs it, then
+//redraws. An action returning false means do not redraw, which is used for things like the
+//row arrows that would otherwise undo their own scrolling.
+//The rest is the odds and ends a real app needs: a short delay before searching so it does
+//not fire on every keystroke, checks that a slow reply still belongs to the screen you are
+//on before showing it, hiding the player controls after a couple of seconds of stillness,
+//and asking the download for its speed once a second while something is playing.

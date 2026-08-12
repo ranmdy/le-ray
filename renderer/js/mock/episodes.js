@@ -69,3 +69,8 @@ export const EPISODES = {
 };
 
 export const SEASONS = [1, 2];
+
+//review: this is what we did here: episodes.js is a short list of made up episodes used
+//when there is no real episode data, so a series detail page still has something to show.
+//Each one carries the same fields a real TMDB episode has, a number, title, description and
+//length, so the episode list draws them without knowing they are not real.
