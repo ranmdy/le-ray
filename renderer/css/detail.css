@@ -1,0 +1,292 @@
+.detail {
+  min-height: 100vh;
+  padding-bottom: var(--s-11);
+}
+
+.detail__hero {
+  position: relative;
+  min-height: 70vh;
+  padding: var(--s-11) var(--s-11) var(--s-9);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.detail__art {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.detail__scrim-left {
+  position: absolute;
+  inset: 0;
+  background: var(--scrim-left);
+  z-index: 1;
+}
+
+.detail__scrim-bottom {
+  position: absolute;
+  inset: 0;
+  background: var(--scrim-bottom);
+  z-index: 1;
+}
+
+.detail__body {
+  position: relative;
+  z-index: 2;
+  max-width: 680px;
+}
+
+.detail__back {
+  background: transparent;
+  border: none;
+  color: var(--c-text-7);
+  font-family: var(--font);
+  font-size: var(--fs-md);
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: var(--s-6);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.detail__back:hover {
+  color: var(--c-text-1);
+}
+
+.detail__meta-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+
+.detail__genre {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-heading);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-wide);
+  color: var(--c-accent);
+}
+
+.detail__quality {
+  font-size: var(--fs-3xs);
+  font-weight: var(--fw-heading);
+  color: var(--c-text-2);
+  background: var(--c-fill);
+  padding: 2px var(--s-2);
+  border: 1px solid var(--c-border);
+}
+
+.detail__rating {
+  font-size: var(--fs-xs);
+  color: var(--c-accent-bright);
+}
+
+.detail__imdb {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  text-decoration: none;
+  border: 1px solid var(--c-border);
+  padding: 3px var(--s-2);
+}
+
+.detail__imdb:hover {
+  border-color: var(--c-accent);
+}
+
+.detail__imdb-mark {
+  font-size: var(--fs-4xs);
+  font-weight: var(--fw-heading);
+  letter-spacing: var(--ls-wide);
+  color: var(--c-ground);
+  background: var(--c-accent);
+  padding: 1px var(--s-1);
+}
+
+.detail__imdb-score {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-heading);
+  color: var(--c-text-1);
+}
+
+.detail__imdb-votes {
+  font-size: var(--fs-4xs);
+  color: var(--c-text-8);
+}
+
+.detail__title {
+  font-size: var(--fs-hero-sm);
+  font-weight: var(--fw-heading);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-hero);
+  color: var(--c-text-1);
+  margin-bottom: var(--s-3);
+}
+
+.detail__meta {
+  font-size: var(--fs-md);
+  color: var(--c-text-7);
+  margin-bottom: var(--s-5);
+}
+
+.detail__synopsis {
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  color: var(--c-text-3);
+  margin-bottom: var(--s-6);
+}
+
+.detail__credits {
+  font-size: var(--fs-sm);
+  color: var(--c-text-6);
+  margin-bottom: var(--s-7);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.detail__label {
+  color: var(--c-text-9);
+}
+
+.detail__actions {
+  display: flex;
+  gap: var(--s-4);
+}
+
+.detail__play-icon {
+  margin-right: var(--s-2);
+  font-size: 0.9em;
+}
+
+.detail__episodes {
+  position: relative;
+  z-index: 2;
+  padding: 0 var(--s-11);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.detail__seasons {
+  display: flex;
+  gap: var(--s-3);
+  margin-bottom: var(--s-6);
+  border-bottom: 1px solid var(--c-border);
+  padding-bottom: var(--s-4);
+}
+
+.detail__season {
+  background: transparent;
+  border: none;
+  color: var(--c-text-7);
+  font-family: var(--font);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-heading);
+  cursor: pointer;
+  padding: var(--s-2) var(--s-4);
+  position: relative;
+}
+
+.detail__season:hover {
+  color: var(--c-text-1);
+}
+
+.detail__season--active {
+  color: var(--c-accent);
+}
+
+.detail__season--active::after {
+  content: '';
+  position: absolute;
+  bottom: calc(-1 * var(--s-4) - 1px);
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--c-accent);
+}
+
+.detail__episode-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.episode-row {
+  display: grid;
+  grid-template-columns: 32px 140px 1fr 80px;
+  align-items: center;
+  gap: var(--s-5);
+  padding: var(--s-3);
+  background: var(--c-surface-1);
+  border: 1px solid var(--c-border-soft);
+  cursor: pointer;
+  transition: transform var(--dur-quick) var(--ease), background var(--dur-quick) var(--ease);
+}
+
+.episode-row:hover {
+  background: var(--c-surface-3);
+  border-color: var(--c-border);
+}
+
+.episode-row--skeleton {
+  display: block;
+  height: 92px;
+  border-color: transparent;
+  cursor: default;
+}
+
+.detail__episodes-empty {
+  font-size: var(--fs-sm);
+  color: var(--c-text-7);
+  margin: 0;
+  padding: var(--s-5) 0;
+}
+
+.episode-row__num {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-heading);
+  color: var(--c-text-8);
+  text-align: center;
+}
+
+.episode-row__still {
+  height: 80px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.episode-row__play {
+  font-size: 24px;
+  color: var(--c-text-1);
+  opacity: 0;
+  transition: opacity var(--dur-quick) var(--ease);
+}
+
+.episode-row:hover .episode-row__play {
+  opacity: 1;
+}
+
+.episode-row__title {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-heading);
+  color: var(--c-text-1);
+  margin-bottom: var(--s-1);
+}
+
+.episode-row__blurb {
+  font-size: var(--fs-xs);
+  color: var(--c-text-7);
+  line-height: 1.4;
+}
+
+.episode-row__length {
+  font-size: var(--fs-xs);
+  color: var(--c-text-8);
+  text-align: right;
+}

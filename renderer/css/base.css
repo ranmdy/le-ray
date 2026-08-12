@@ -1,0 +1,141 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--c-ground);
+  color: var(--c-text-1);
+  font-family: var(--font);
+  font-weight: var(--fw-body);
+  font-size: var(--fs-base);
+  overflow-x: hidden;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+a {
+  color: var(--c-accent);
+}
+
+a:hover {
+  color: var(--c-accent-bright);
+}
+
+button,
+input {
+  font-family: inherit;
+  color: inherit;
+}
+
+button {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+input::placeholder {
+  color: var(--c-text-9);
+}
+
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.kicker {
+  font-size: var(--fs-2xs);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  color: var(--c-accent);
+}
+
+.btn {
+  font-weight: var(--fw-heading);
+  font-size: var(--fs-md);
+  color: var(--c-ground);
+  background: var(--c-text-1);
+  padding: var(--s-5) var(--s-7);
+}
+
+.btn:hover {
+  background: var(--c-accent);
+}
+
+.btn--lg {
+  font-size: var(--fs-base);
+  padding: 17px var(--s-8);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.btn--ghost {
+  color: var(--c-text-1);
+  background: var(--c-fill);
+}
+
+.btn--ghost:hover {
+  background: var(--c-fill-hover);
+}
+
+.scroll-x {
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+.stub {
+  padding: 120px var(--s-10);
+}
+
+.stub__title {
+  font-weight: var(--fw-heading);
+  font-size: var(--fs-display);
+  letter-spacing: var(--ls-hero);
+  margin: var(--s-5) 0 0;
+}
+
+.shimmer {
+  background: linear-gradient(
+    100deg,
+    var(--c-surface-1) 30%,
+    var(--c-surface-3) 50%,
+    var(--c-surface-1) 70%
+  );
+  background-size: 280% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 140% 0;
+  }
+  to {
+    background-position: -140% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: none;
+  }
+
+  * {
+    transition-duration: 1ms !important;
+  }
+}

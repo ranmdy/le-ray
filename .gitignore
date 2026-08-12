@@ -1,0 +1,20 @@
+# Secrets — the TMDB key lives here and must never be committed.
+.env
+.env.local
+.env.*.local
+
+node_modules/
+dist/
+build/
+out/
+
+# Runtime
+*.log
+npm-debug.log*
+.DS_Store
+
+# Claude Code local tooling config — personal permission grants, not project config
+.claude/
+
+# Generated presentation/report artifacts — not source, not tracked
+deliverables/

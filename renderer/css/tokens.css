@@ -1,0 +1,114 @@
+:root {
+  --c-ground: #08080a;
+  --c-surface-1: #101015;
+  --c-surface-2: #16161b;
+  --c-surface-3: #1c1c23;
+  --c-surface-4: #22222a;
+  --c-surface-5: #33333d;
+
+  --c-text-1: #f7f7f8;
+  --c-text-2: #e2e2e8;
+  --c-text-3: #d5d5dc;
+  --c-text-4: #c9c9d1;
+  --c-text-5: #b6b6bd;
+  --c-text-6: #a8a8b2;
+  --c-text-7: #8a8a94;
+  --c-text-8: #6d6d78;
+  --c-text-9: #5a5a63;
+  --c-text-10: #45454f;
+
+  --c-accent: #f2b33d;
+  --c-accent-bright: #ffd48a;
+  --c-accent-tint: rgba(242, 179, 61, 0.12);
+
+  --c-border: #26262e;
+  --c-border-soft: #1c1c23;
+
+  --c-fill: rgba(247, 247, 248, 0.12);
+  --c-fill-hover: rgba(247, 247, 248, 0.22);
+  --c-fill-faint: rgba(247, 247, 248, 0.05);
+  --c-fill-soft: rgba(247, 247, 248, 0.1);
+  --c-track: rgba(247, 247, 248, 0.2);
+  --c-track-lit: rgba(247, 247, 248, 0.45);
+  --c-chip: rgba(6, 6, 8, 0.55);
+
+  --scrim-left: linear-gradient(
+    to right,
+    rgba(8, 8, 10, 0.94) 0%,
+    rgba(8, 8, 10, 0.72) 26%,
+    rgba(8, 8, 10, 0.1) 62%,
+    transparent 85%
+  );
+  --scrim-bottom: linear-gradient(
+    to top,
+    var(--c-ground) 1%,
+    rgba(8, 8, 10, 0.5) 22%,
+    transparent 55%
+  );
+  --scrim-poster: linear-gradient(
+    to top,
+    rgba(6, 6, 8, 0.92) 4%,
+    rgba(6, 6, 8, 0.15) 46%,
+    transparent 72%
+  );
+  --scrim-header: linear-gradient(to bottom, rgba(8, 8, 10, 0.92), rgba(8, 8, 10, 0));
+  --scrim-empty: radial-gradient(120% 90% at 75% 25%, #1d2340 0%, var(--c-ground) 62%);
+
+  --font: "Archivo", system-ui, sans-serif;
+  --fw-heading: 800;
+  --fw-body: 400;
+
+  --fs-hero: 92px;
+  --fs-hero-sm: 84px;
+  --fs-display: 76px;
+  --fs-title: 44px;
+  --fs-title-sm: 40px;
+  --fs-input: 38px;
+  --fs-h1: 22px;
+  --fs-h2: 20px;
+  --fs-h3: 17px;
+  --fs-lg: 17px;
+  --fs-base: 16px;
+  --fs-md: 15px;
+  --fs-sm: 14px;
+  --fs-xs: 13px;
+  --fs-2xs: 12px;
+  --fs-3xs: 11px;
+  --fs-4xs: 10px;
+
+  --lh-hero: 0.9;
+  --lh-tight: 1.05;
+  --lh-body: 1.6;
+
+  --ls-hero: -0.045em;
+  --ls-title: -0.03em;
+  --ls-tight: -0.02em;
+  --ls-wide: 0.12em;
+  --ls-wider: 0.22em;
+
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 14px;
+  --s-5: 16px;
+  --s-6: 20px;
+  --s-7: 24px;
+  --s-8: 32px;
+  --s-9: 40px;
+  --s-10: 48px;
+  --s-11: 64px;
+  --s-12: 96px;
+
+  --radius: 0;
+  --poster-w: 178px;
+  --poster-ratio: 2 / 3;
+
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --dur-card: 220ms;
+  --dur-fade: 300ms;
+  --dur-quick: 150ms;
+  --card-scale: 1.09;
+
+  --focus-ring: 2px solid var(--c-accent);
+  --focus-offset: 4px;
+}
